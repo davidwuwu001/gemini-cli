@@ -1,7 +1,7 @@
 /**
  * @license
  * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-200
  */
 
 import fs from 'fs';
@@ -69,7 +69,7 @@ try {
   process.exit(1);
 }
 
-// Copy README.md to packages/cli
+// Copy LICENSE to packages/cli
 const rootLicensePath = path.resolve(__dirname, '../LICENSE');
 const cliLicensePath = path.resolve(__dirname, '../packages/cli/LICENSE');
 

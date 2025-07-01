@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  # Trigger 1: For Official Releases (when a tag like v1.2.3 is pushed)
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+' # Matches tags like v1.0.0, v1.2.3, etc.
+
+  # Trigger 2: For Pre-Releases (manual trigger)
+  workflow_dispatch:
+    inputs:
+      pre_release_tag:
+        description: 'NPM pre-release tag (e.g., "beta", "next"). This will be the npm dist-tag.'
+        required: true
+        default: 'next'
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Do not run on forks
+    if: github.repository == 'gemini-cli-dev/gemini-cli'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          # Authenticate with the npm registry
+          registry-url: 'https://wombat-dressing-room.appspot.com'
+
+      - name: Install Dependencies
+        run: npm install
+
+      # This step only runs for manual pre-release builds
+      - name: Set Pre-release Version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          # Creates a version like: 1.2.3-next.a1b2c3d
+          npm version --no-git-tag-version "prerelease --preid=${{ github.event.inputs.pre_release_tag }}.${{
+            github.sha_short
+          }}"
+          echo "Set pre-release version in package.json"
+
+      - name: Determine NPM tag
+        id: npm_tag
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.event.inputs.pre_release_tag }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build, Prepare, and Publish
+        run: npm run publish:release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.WOMBAT_TOKEN }}
+          NPM_PUBLISH_TAG: ${{ steps.npm_tag.outputs.tag }}
+          # These would need to be configured via secrets or inputs if they vary
+          GEMINI_SANDBOX: 'docker'
+          SANDBOX_IMAGE_REGISTRY: ''
+          SANDBOX_IMAGE_NAME: ''
