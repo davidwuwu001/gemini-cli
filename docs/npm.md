@@ -55,6 +55,51 @@ When the packages are published, the `workspace:*` dependencies are replaced wit
 
 When a user runs `npx @google/gemini-cli`, npm downloads the `@google/gemini-cli` package and its dependencies from the npm registry. Because the `workspace:*` dependencies were replaced with the actual version numbers during publishing, npm is able to resolve and download the correct versions of all the required packages.
 
+## Release Process
+
+This project follows a structured release process to ensure that all packages are versioned and published correctly. The process is designed to be as automated as possible, but it still requires some manual steps.
+
+### 1. Create a Release Branch
+
+All releases should be prepared on a dedicated release branch. This allows the release to be reviewed and tested before it is merged into the main branch.
+
+```bash
+git checkout -b release/vX.X.X
+```
+
+### 2. Run the Versioning Script
+
+The `npm run release:version` script is used to bump the version number of all packages in the monorepo. This script will also update the dependencies between the packages and create a git commit and tag for the new version.
+
+```bash
+npm run release:version <patch|minor|major|prerelease>
+```
+
+This will do the following:
+
+1.  Bump the version in the root `package.json`.
+2.  Run a script to update the `@google/gemini-cli-core` dependency in `@google/gemini-cli`'s `package.json`.
+3.  Create a `chore(release): vX.X.X` commit with all the file changes.
+4.  Create a `vX.X.X` git tag.
+
+### 3. Push the Commit and Tag
+
+Once the versioning script has been run, you need to push the commit and the new tag to the remote repository. The `push-release` script can be used to do this.
+
+```bash
+npm run push-release
+```
+
+### 4. Create a Pull Request
+
+After pushing the release branch and tag, create a pull request to merge the release branch into the main branch. The pull request should be reviewed and approved by at least one other maintainer.
+
+The description of the pull request should include a summary of the changes in the release. This will be used to generate the release notes.
+
+### 5. Publish to the Registry
+
+Once the release pull request is merged into the main branch, the packages are automatically published to the npm registry by the CI/CD pipeline. You can monitor the progress of the publishing process in the GitHub Actions tab.
+
 ## Local Testing and Validation
 
 It is crucial to test any changes to the packaging and publishing process locally before committing them. This ensures that the packages will be published correctly and that they will work as expected when installed by a user.
